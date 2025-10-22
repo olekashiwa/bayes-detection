@@ -13,8 +13,10 @@ sys.path.append(str(Path(__file__).parent / 'src'))
 import numpy as np
 import argparse
 import logging
-from detectors.bayesian import BayesianDetector
-from signal_generators.radar_signal import RadarSignalGenerator
+
+# Импортируем наши модули
+from src.detectors.bayesian import BayesianDetector
+from src.signal_generators.radar_signal import RadarSignalGenerator
 
 # Настройка логирования
 logging.basicConfig(
@@ -36,26 +38,24 @@ def demo_radar_signal():
     )
     
     # Генерируем чистый сигнал
-    clean_signal, time_axis, metadata = radar_gen.generate(
+    clean_signal, time_axis = radar_gen.generate(
         num_pulses=2,
-        observation_time=3e-3,
-        return_metadata=True
+        observation_time=3e-3
     )
     
     # Генерируем сигнал с шумом
-    noisy_signal, _, _ = radar_gen.generate(
+    noisy_signal, _ = radar_gen.generate(
         num_pulses=2,
         observation_time=3e-3,
         add_noise=True,
-        noise_snr_db=10,
-        return_metadata=True
+        noise_snr_db=10
     )
     
     logger.info(f"Параметры сигнала:")
-    logger.info(f"  - Амплитуда: {metadata['amplitude']} В")
-    logger.info(f"  - Несущая частота: {metadata['carrier_frequency']/1e3:.1f} кГц")
-    logger.info(f"  - Длительность импульса: {metadata['pulse_width']*1e3:.1f} мс")
-    logger.info(f"  - Мощность сигнала: {metadata['signal_power']:.3f} Вт")
+    logger.info(f"  - Амплитуда: {radar_gen.A} В")
+    logger.info(f"  - Несущая частота: {radar_gen.fc/1e3:.1f} кГц")
+    logger.info(f"  - Длительность импульса: {radar_gen.ti*1e3:.1f} мс")
+    logger.info(f"  - Мощность сигнала: {radar_gen.Ps:.3f} Вт")
     
     # Визуализация
     import matplotlib.pyplot as plt
@@ -209,24 +209,6 @@ def main():
             plt.title('Распределения данных')
             plt.legend()
             plt.grid(True, alpha=0.3)
-            
-            # ROC-кривая (если есть true_labels)
-            if 'true_labels' in locals():
-                from sklearn.metrics import roc_curve, auc
-                fpr, tpr, _ = roc_curve(true_labels, scores)
-                roc_auc = auc(fpr, tpr)
-                
-                plt.subplot(2, 2, 4)
-                plt.plot(fpr, tpr, color='darkorange', lw=2, 
-                        label=f'ROC кривая (AUC = {roc_auc:.2f})')
-                plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-                plt.xlim([0.0, 1.0])
-                plt.ylim([0.0, 1.05])
-                plt.xlabel('False Positive Rate')
-                plt.ylabel('True Positive Rate')
-                plt.title('ROC кривая')
-                plt.legend(loc="lower right")
-                plt.grid(True, alpha=0.3)
             
             plt.tight_layout()
             plt.show()
